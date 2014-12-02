@@ -56,9 +56,9 @@ case class Base(seats: List[Node], matches: Array[Match] = Array(), seedOrder: L
 
   def getSeats: List[Node] = tree.levelOrder(List[Node]())(_ :: _).reverse//tree.preOrder(List[Node]())(_ :: _).reverse//tree.levelOrder(List[Node]())(_ :: _).reverse.toArray
 
-  def matchWinner(seat: Node) = {
-      val matchParent = getParent(seat.position)
-      ???
+  def matchWinner(seat: Node): Base = {
+      val matchParent = getParent(seat.position).element.get.copy(payload = seat.payload)
+      replace(matchParent)
   }
 
   def getParent(seat: Int) = {

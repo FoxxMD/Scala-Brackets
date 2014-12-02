@@ -66,10 +66,38 @@ class BaseTest extends FlatSpec with Matchers with GivenWhenThen {
     val seats = for (pos <- List(8, 4, 12, 10, 14, 2, 6, 13, 15, 9, 11, 5, 7, 1, 3)) yield {
       Node(pos)
     }
+    val seedOrder = List(1, 3, 5, 7, 9, 11, 13, 15)
     val bracket = Base(seats)
     assert(bracket.getParent(5).element.get.position == 6)
   }
 
+  "The base" should "replace the advancing seat when a winning seat is chosen" in {
+    /*    val seats = for (pos <- List(8, 4, 12, 10, 14, 2, 6, 13, 15, 9, 11, 5, 7, 1, 3)) yield {
+          Node(pos, Option(randomPersonGen))
+        }*/
+    val seats = seatsWithPlayers
+    val bracket = Base(seats)
+    val advancedBracket = bracket.matchWinner(seats.find(x => x.position == 3).head)
+    assert(advancedBracket.getSeats.find(x => x.position == 2).get.payload == seats.find(x => x.position == 3).get.payload)
+  }
+
+  def seatsWithPlayers = {
+    val seedOrder = List(1, 3, 5, 7)
+    val players = for (x <- seedOrder) yield randomPersonGen
+    var playerCounter = 0
+
+    val seats = for (pos <- List(4, 2, 6, 1, 3, 5, 7)) yield Node(pos)
+
+    seats.map { x =>
+      if (seedOrder.contains(x.position)) {
+        val a = x.copy(payload = players.drop(playerCounter).headOption)
+        playerCounter = playerCounter + 1
+        a
+      }
+      else
+        x
+    }
+  }
 
   def randomPersonGen: JObject = {
     val names = List("charles", "michael", "lisa", "troy", "huey", "stan")
