@@ -23,6 +23,10 @@ class BSTTest extends FlatSpec with Matchers {
     bst.filter(_ % 2 == 0).toList should be (List(12, 6, 4, 2, 8, 10))
   }
 
+  it should "produce the same tree from itself" in {
+    bst.levelOrder(List[Int]())(_ :: _).reverse.foldLeft(BST[Int]()){(acc, elem) => acc + elem}
+  }
+
   "BST" should "remove the value 6" in {
     val bstNew = BST(12) + 4 + 2 + 1 + 3 ++ BST(5, 8, 7, 10, 9)
     val (opt, bst1) = bst - 6

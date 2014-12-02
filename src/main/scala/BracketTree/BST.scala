@@ -11,7 +11,13 @@ trait BST[+A] {
   def -[B >: A <% Ordered[B]](elem: B): (Option[B], BST[B])
 
   def exists(p: A => Boolean): Boolean
+
+  def getLeft[B >: A <% Ordered[B]]: Option[BST[B]]
+  def getRight[B >: A <% Ordered[B]]: Option[BST[B]]
+  def element[B >: A <% Ordered[B]]: Option[B]
+
   def contains[B >: A <% Ordered[B]](e: B): Boolean
+  def findParent[B >: A <% Ordered[B]](p: A => Boolean): BST[B]
   def filter[B >: A <% Ordered[B]](p: A => Boolean): BST[B] = filterAcc[B](EmptyBST)(p)
   def filterAcc[B >: A <% Ordered[B]](acc: BST[B])(p: A => Boolean): BST[B]
   def filterByLevel[B >: A <% Ordered[B]](p: Int => Boolean): List[A]
@@ -40,11 +46,16 @@ case object EmptyBST extends BST[Nothing] {
   def ++[B <% Ordered[B]](bst: BST[B]) = bst
   def -[B <% Ordered[B]](elem: B) = (None, EmptyBST)
 
+  def getLeft[B <% Ordered[B]]: Option[BST[B]] = None
+  def getRight[B <% Ordered[B]]: Option[BST[B]] = None
+  def element[B <% Ordered[B]] = None
+
   def flatMap[B <% Ordered[B]](f: Nothing => BST[B]): BST[B] = EmptyBST
   def map[B <% Ordered[B]](f: Nothing => B): BST[B] = EmptyBST
 
   def exists(p: Nothing => Boolean) = false
   def contains[B <% Ordered[B]](e: B) = false
+  def findParent[B <% Ordered[B]](p: Nothing => Boolean) = EmptyBST
   def filterAcc[B <% Ordered[B]](acc: BST[B])(p: Nothing => Boolean) = acc
   def filterByLevel[B <% Ordered[B]](p: Int => Boolean) = List[Nothing]()
 
@@ -69,6 +80,10 @@ case class NonEmptyBST[A <% Ordered[A]](elem: A, left: BST[A], right: BST[A]) ex
     else if (newElem > elem) withRight(right + newElem)
     else this
 
+  def getLeft[B >: A <% Ordered[B]] = Option(left)
+  def getRight[B >: A <% Ordered[B]] = Option(right)
+  def element[B >: A <% Ordered[B]] = Option(elem)
+
   def ++[B >: A <% Ordered[B]](bst: BST[B]) = bst.preOrder[BST[B]](this)((e, acc) => acc + e)
 
   def -[B >: A <% Ordered[B]](e: B) =
@@ -86,8 +101,40 @@ case class NonEmptyBST[A <% Ordered[A]](elem: A, left: BST[A], right: BST[A]) ex
       }
     })
 
-  def exists(p: A => Boolean) = p(elem) || left.exists(p) || right.exists(p)
+  def exists(p: A => Boolean) = {
+    p(elem) || left.exists(p) || right.exists(p)
+  }
   def contains[B >: A <% Ordered[B]](e: B) = exists(_ == e)
+
+  def findParent[B >: A <% Ordered[B]](p: A => Boolean): BST[B] = {
+    if(p(elem))
+      this
+    else
+    (this.left, this.right) match {
+      case(l: NonEmptyBST[A], r: NonEmptyBST[A]) =>
+        if(p(l.elem) || p(r.elem))
+          this
+        else{
+          l.findParent(p) match {
+            case n: NonEmptyBST[A] =>
+              n
+            case EmptyBST =>
+              r.findParent(p)
+          }
+        }
+      case(EmptyBST, r: NonEmptyBST[A]) =>
+        if(p(r.elem))
+          r
+        else
+          r.findParent(p)
+      case(l: NonEmptyBST[A], EmptyBST) =>
+        if(p(l.elem))
+          l
+        else
+          l.findParent(p)
+      case _ => EmptyBST
+    }
+  }
   def filterAcc[B >: A <% Ordered[B]](acc: BST[B])(p: A => Boolean) =
     right.filterAcc(left.filterAcc(if (p(elem)) acc + elem else acc)(p))(p)
 
@@ -150,9 +197,6 @@ case class NonEmptyBST[A <% Ordered[A]](elem: A, left: BST[A], right: BST[A]) ex
         m.updated(i, m.getOrElse[List[B]](i, List()).+:(element))
     }
   }
-  
-  
-  
 
   def withLeft[B >: A <% Ordered[B]](newLeft: BST[B]) = NonEmptyBST(elem, newLeft, right)
   def withRight[B >: A <% Ordered[B]](newRight: BST[B]) = NonEmptyBST(elem, left, newRight)
