@@ -1,4 +1,4 @@
-package BracketTree
+package ScalaBrackets
 
 /**
  * Created by Matthew on 11/24/2014.

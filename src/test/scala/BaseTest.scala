@@ -1,10 +1,4 @@
-import BracketTree.Bracket.Base
-import BracketTree.Node
-import org.json4s.JObject
-import org.json4s.JsonAST.JString
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
-
-import scala.util.Random
 
 /**
  * Created by Matthew on 12/2/2014.
@@ -12,7 +6,7 @@ import scala.util.Random
 class BaseTest extends FlatSpec with Matchers with GivenWhenThen {
 
 
-  "The base" should "should create a bracket with correct positions" in {
+/*  "The base" should "should create a bracket with correct positions" in {
 
     Given("a 2v2 configuration of seats")
     val seatPos = List(4, 2, 6, 1, 3, 5, 7)
@@ -72,9 +66,6 @@ class BaseTest extends FlatSpec with Matchers with GivenWhenThen {
   }
 
   "The base" should "replace the advancing seat when a winning seat is chosen" in {
-    /*    val seats = for (pos <- List(8, 4, 12, 10, 14, 2, 6, 13, 15, 9, 11, 5, 7, 1, 3)) yield {
-          Node(pos, Option(randomPersonGen))
-        }*/
     val seats = seatsWithPlayers
     val bracket = Base(seats)
     val advancedBracket = bracket.matchWinner(seats.find(x => x.position == 3).head)
@@ -103,5 +94,5 @@ class BaseTest extends FlatSpec with Matchers with GivenWhenThen {
     val names = List("charles", "michael", "lisa", "troy", "huey", "stan")
     val usernames = List("lee3", "jesus", "superman", "whatever", "iceman5", "lazers")
     JObject(List(("name", JString(Random.shuffle(names).head)), ("userName", JString(Random.shuffle(usernames).head))))
-  }
+  }*/
 }

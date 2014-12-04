@@ -1,4 +1,4 @@
-import BracketTree.BST
+import ScalaBrackets.BST
 import org.scalatest.{Matchers, FlatSpec}
 
 /**

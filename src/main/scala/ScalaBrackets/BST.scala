@@ -1,4 +1,4 @@
-package BracketTree
+package ScalaBrackets
 
 //https://github.com/melvic-ybanez/scala-bst/blob/master/ScalaBST/src/BST.scala
 
