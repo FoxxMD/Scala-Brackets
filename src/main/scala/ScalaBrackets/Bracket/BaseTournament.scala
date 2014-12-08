@@ -26,4 +26,7 @@ trait BaseTournament[T] {
   def getMatch(matchId: Int): Match
 
   def outputResultsJBracket: JValue
+  def outputParticipantsToJBracket: JValue
+  def outputToJBracket: JValue
+
 }

@@ -5,6 +5,8 @@ import ScalaBrackets._
 import monocle.SimpleLens
 import monocle.syntax._
 import org.json4s.JsonAST.JValue
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, Extraction, Formats}
 
 import scala.collection.immutable.SortedSet
@@ -135,6 +137,19 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     Extraction.decompose(a.values.map(x => x.values))
   }
 
+  override def outputToJBracket = {
+    render(("teams" -> outputParticipantsToJBracket) ~
+      ("results" -> outputResultsJBracket))
+  }
+
+  def outputParticipantsToJBracket = {
+    def a(elem: Match): Option[JValue] = elem.home.map(x => getParticipant(x.participantId).map(y => y.payload.getOrElse(render(y.id))))
+    def b(elem: Match): Option[JValue] = elem.away.map(x => getParticipant(x.participantId).map(y => y.payload.getOrElse(render(y.id))))
+
+    getSeedMatches.foldLeft(List(List[Option[JValue]]())){(acc, elem) => acc.+:(List(a(elem),b(elem)))  }
+  }
+
+  private[this] def getParticipant(id: Int) = { participants.find(x => x.id == id) }
   private[this] def matchToJBracketFormat(m: Match): List[Option[Int]] = {
     List(m.home.map(_.participantId),m.away.map(_.participantId))
   }

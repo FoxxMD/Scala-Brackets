@@ -102,7 +102,7 @@ class EliminationTest extends FlatSpec with Matchers with GivenWhenThen {
 
     val advancedTour = tour.advanceMatch(1, tour.getMatch(1).away.get.participantId)
 
-    println(pretty(render(advancedTour.outputResultsJBracket)))
+    println(pretty(render(advancedTour.outputToJBracket)))
   }
 
 }
