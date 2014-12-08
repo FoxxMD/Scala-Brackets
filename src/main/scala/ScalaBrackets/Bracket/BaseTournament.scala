@@ -1,6 +1,7 @@
 package ScalaBrackets.Bracket
 
 import ScalaBrackets._
+import org.json4s.JsonAST.JValue
 
 import scala.collection.immutable.SortedSet
 
@@ -22,4 +23,6 @@ trait BaseTournament[T] {
 
   def getWinner: Option[Participant]
   def getMatchesByRound(round: Int): SortedSet[Match]
+
+  def outputResultsJBracket: JValue
 }
