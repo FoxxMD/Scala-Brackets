@@ -12,7 +12,7 @@ trait BaseTournament[T] {
 
   def matches: SortedSet[Match]
   def participants: Set[Participant]
-  def seedOrder: Array[Int]
+  def seedOrder: Option[Array[Int]]
 
   def seed(newParticipants: Option[Set[Participant]], newSeedOrder: Option[Array[Int]]): BaseTournament[T]
   def addParticipant(par: Participant): BaseTournament[T]
@@ -23,6 +23,7 @@ trait BaseTournament[T] {
 
   def getWinner: Option[Participant]
   def getMatchesByRound(round: Int): SortedSet[Match]
+  def getMatch(matchId: Int): Match
 
   def outputResultsJBracket: JValue
 }

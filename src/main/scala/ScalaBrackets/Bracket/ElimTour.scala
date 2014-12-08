@@ -13,7 +13,7 @@ import scala.collection.immutable.SortedSet
  * Created by Matthew on 11/24/2014.
  */
 
-case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = Set(), seedOrder: Array[Int] = Array()) extends BaseTournament[ElimTour] {
+case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = Set(), seedOrder: Option[Array[Int]] = None) extends BaseTournament[ElimTour] {
 
   if (matches.count(x => x.inStartingRound) * 2 < participants.size)
     throw new IllegalArgumentException("Cannot create a tournament with more participants than starting seats")
@@ -27,7 +27,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
 
 
   def addParticipant(par: Participant): ElimTour = {
-    if (matches.count(x => x.inStartingRound && !x.hasAvailableSeat) * 2 == participants.size)
+    if (matches.count(x => x.inStartingRound) * 2 == participants.size)
       throw new IllegalArgumentException("Cannot add more participants than starting seats")
     else {
       val zmatch = matches.find(x => x.inStartingRound && x.hasAvailableSeat).get
@@ -53,8 +53,10 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
 
   def seed(newParticipants: Option[Set[Participant]] = None, newSeedOrder: Option[Array[Int]] = None): ElimTour = {
 
-    val usedSeedOrder = newSeedOrder.getOrElse(seedOrder)
     val usedParticipants = newParticipants.getOrElse(participants)
+    val usedSeedOrder = newSeedOrder.getOrElse(seedOrder.getOrElse{
+      usedParticipants.foldLeft(Array[Int]())((acc, elem) => acc :+ elem.id)
+    })
 
     if (matches.count(x => x.inStartingRound) * 2 < usedParticipants.size)
       throw new Exception("Cannot create a tournament with more participants than starting seats")
@@ -72,10 +74,10 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     this.copy(matches = newMatches)
   }
 
-  def setScore(matchId: Int, homeScore: Option[Int], awayScore: Option[Int]) = {
+  def setScore(matchId: Int, homeScore: Option[Int] = None, awayScore: Option[Int] = None) = {
     val zmatch = matches.find(x => x.id == matchId).getOrElse(throw new Exception("Cannot find match with Id " + matchId))
     val newMatch = zmatch.copy(home = zmatch.home map (_.setScore(homeScore)))
-    this applyLens _matches modify (_.-(zmatch)) applyLens _matches modify (_.+(newMatch))
+    this applyLens _matches set matches.filterNot(x => x.id == zmatch.id).+(newMatch)
   }
 
   def advanceMatch(matchId: Int, winnerId: Int) = {
@@ -93,6 +95,8 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
   def getWinner: Option[Participant] = matches.last.winner.fold[Option[Participant]](None)(p => participants.find(x => x.id == p.participantId))
 
   def getMatchesByRound(round: Int) = matches.filter(x => x.round == round)
+
+  def getMatch(matchId: Int) = matches.find(x => x.id == matchId).get
 
   private[this] def getNonSeedMatches: SortedSet[Match] = {
     matches.filter(x => !x.inStartingRound)
