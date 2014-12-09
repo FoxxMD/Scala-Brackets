@@ -73,7 +73,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
       accum + element.addSeat(usedParticipants.find(x => x.id == usedSeedOrder.drop(index - 2).head).get.id).addSeat(usedParticipants.find(x => x.id == usedSeedOrder.drop(index - 1).head).get.id)
     }
 
-    this.copy(matches = newMatches)
+    this.copy(matches = newMatches, participants = usedParticipants)
   }
 
   def setScore(matchId: Int, homeScore: Option[Int] = None, awayScore: Option[Int] = None) = {
