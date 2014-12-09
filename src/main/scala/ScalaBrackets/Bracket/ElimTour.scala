@@ -69,8 +69,25 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     var index = 0
 
     val newMatches = nonSeedMatches ++ seedMatches.foldLeft(SortedSet[Match]()) { (accum, element) =>
-      index = index + 2
-      accum + element.addSeat(usedParticipants.find(x => x.id == usedSeedOrder.drop(index - 2).head).get.id).addSeat(usedParticipants.find(x => x.id == usedSeedOrder.drop(index - 1).head).get.id)
+      var homeOption: Option[Participant] = None
+      var awayOption: Option[Participant] = None
+      if(usedSeedOrder.lift(index).isDefined)
+        homeOption = usedParticipants.find(x => x.id == usedSeedOrder.lift(index).get).headOption
+      if(usedSeedOrder.lift(index+1).isDefined)
+        awayOption = usedParticipants.find(x => x.id == usedSeedOrder.lift(index+1).get).headOption
+
+      if(homeOption.isDefined && awayOption.isEmpty)
+      {
+        index = index + 1
+        accum + element.addSeat(homeOption.get.id)
+      }
+      else if(homeOption.isDefined && awayOption.isDefined)
+      {
+        index = index + 2
+        accum + element.addSeat(homeOption.get.id).addSeat(awayOption.get.id)
+      }
+      else
+        accum + element
     }
 
     this.copy(matches = newMatches, participants = usedParticipants)
@@ -114,7 +131,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
 
   override def outputResultsJBracket: JValue = {
 
-   val a = matches.foldLeft(Map[String, Map[String, List[List[Option[Int]]]]]()) { (acc, elem) =>
+    val a = matches.foldLeft(Map[String, Map[String, List[List[Option[Int]]]]]()) { (acc, elem) =>
       //update bracket Map based on match bracket #
       acc updated(elem.bracket.toString, acc.get(elem.bracket.toString).fold {
         //if no bracket Map
@@ -146,7 +163,14 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     def a(elem: Match): Option[JValue] = elem.home.map(x => getParticipant(x.participantId).map(y => render(("id" -> y.id) ~ y.payload.get)))
     def b(elem: Match): Option[JValue] = elem.away.map(x => getParticipant(x.participantId).map(y => render(("id" -> y.id) ~ y.payload.get)))
 
-    getSeedMatches.foldLeft(List(List[Option[JValue]]())){(acc, elem) => acc.+:(List(a(elem),b(elem)))  }
+    val x = getSeedMatches.foldLeft(List(List[Option[JValue]]())){(acc, elem) =>
+      acc.:+(List(a(elem),b(elem)))
+    }
+    x.drop(1)
+    /*val x = getSeedMatches.reduceLeft{(acc, elem) =>
+      acc.:+(List(a(elem),b(elem)))
+    }
+        x*/
   }
 
   private[this] def getParticipant(id: Int) = { participants.find(x => x.id == id) }
