@@ -15,8 +15,7 @@ object ScalaBracket extends Build {
         "org.json4s" %% "json4s-core" % "3.2.10",
         "org.scalatest" % "scalatest_2.11" % "2.2.0" % "test",
         "com.github.julien-truffaut"  %%  "monocle-core"    % "0.5.1"
-      ),
-    publishTo := Some("Github" at "https://foxxmd.github.io/maven/scalabracket")
+      )
     ))
 }
 
