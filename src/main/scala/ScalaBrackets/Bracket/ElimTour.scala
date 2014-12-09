@@ -143,8 +143,8 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
   }
 
   def outputParticipantsToJBracket = {
-    def a(elem: Match): Option[JValue] = elem.home.map(x => getParticipant(x.participantId).map(y => y.payload.getOrElse(render(y.id))))
-    def b(elem: Match): Option[JValue] = elem.away.map(x => getParticipant(x.participantId).map(y => y.payload.getOrElse(render(y.id))))
+    def a(elem: Match): Option[JValue] = elem.home.map(x => getParticipant(x.participantId).map(y => render(("id" -> y.id) ~ y.payload.get)))
+    def b(elem: Match): Option[JValue] = elem.away.map(x => getParticipant(x.participantId).map(y => render(("id" -> y.id) ~ y.payload.get)))
 
     getSeedMatches.foldLeft(List(List[Option[JValue]]())){(acc, elem) => acc.+:(List(a(elem),b(elem)))  }
   }
