@@ -99,16 +99,23 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     this applyLens _matches set matches.filterNot(x => x.id == zmatch.id).+(newMatch)
   }
 
-  def advanceMatch(matchId: Int, winnerId: Int) = {
+  def advanceMatch(matchId: Int, winnerId: Int): ElimTour = {
     val wonMatch = matches.find(_.id == matchId).getOrElse[Match](throw new Exception("No match with that Id found"))
-    if (wonMatch.winnerTo.isDefined) {
+    val tourWithUpdatedWinner = if (wonMatch.winnerTo.isDefined) {
       val advancingMatch = matches.find(_.id == wonMatch.winnerTo.get).get
       val first = updateMatches(matches, wonMatch, wonMatch.winner(winnerId))
       this.copy(matches = updateMatches(first, advancingMatch, advancingMatch.addSeat(wonMatch.winner.get.participantId)))
     }
     else
       this.copy(matches = updateMatches(matches, wonMatch, wonMatch.winner(winnerId)))
-
+    val tourwithUpdatedLoser = if(wonMatch.loserTo.isDefined){
+      val advancingLosingMatch = tourWithUpdatedWinner.matches.find(_.id == wonMatch.winnerTo.get).get
+      tourWithUpdatedWinner.copy(matches = updateMatches(tourWithUpdatedWinner.matches, advancingLosingMatch, advancingLosingMatch.addSeat(wonMatch.loser.get.participantId)))
+    }
+    else
+      tourWithUpdatedWinner
+    //this will always be the most updated tournament. if there is no loser than tourWithUpdatedLoser = tourWithUpdatedWinner
+    tourwithUpdatedLoser
   }
 
   def getWinner: Option[Participant] = matches.last.winner.fold[Option[Participant]](None)(p => participants.find(x => x.id == p.participantId))
