@@ -38,10 +38,12 @@ case class Match(id: Int, home: Option[Seat] = None, away: Option[Seat] = None, 
   def winner: Option[Seat] = {
     if(home.isEmpty && away.isEmpty)
       None
-    else if(home.isDefined && home.get.winner)
+    else if(home.isDefined && home.get.winner.isDefined && home.get.winner.get)
       home
-    else
+    else if(away.isDefined && away.get.winner.isDefined && away.get.winner.get)
       away
+    else
+      None
   }
 
   def winner(participantId: Int) = {
@@ -49,9 +51,9 @@ case class Match(id: Int, home: Option[Seat] = None, away: Option[Seat] = None, 
       throw new Exception("Empty match cannot have a winner.")
 
     if(home.isDefined && home.get.participantId == participantId)
-      this.copy(home = Option(home.get.copy(winner = true)))
+      this.copy(home = Option(home.get.copy(winner = Option(true))), away = Option(away.get.copy(winner = Option(false))))
     else
-      this.copy(away = Option(away.get.copy(winner = true)))
+      this.copy(away = Option(away.get.copy(winner = Option(true))), home = Option(home.get.copy(winner = Option(false))))
   }
 
   def loser: Option[Seat] = {
