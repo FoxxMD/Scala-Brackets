@@ -131,12 +131,12 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
 
   override def outputResultsJBracket: JValue = {
 
-    val a = matches.foldLeft(Map[String, Map[String, List[List[Option[Int]]]]]()) { (acc, elem) =>
+    val a = matches.foldLeft(Map[String, Map[String, List[List[Option[String]]]]]()) { (acc, elem) =>
       //update bracket Map based on match bracket #
       acc updated(elem.bracket.toString, acc.get(elem.bracket.toString).fold {
         //if no bracket Map
         //create new round Map with new List(of matches)
-        Map[String, List[List[Option[Int]]]]((elem.round.toString, List(matchToJBracketFormat(elem))))
+        Map[String, List[List[Option[String]]]]((elem.round.toString, List(matchToJBracketFormat(elem))))
       } {
         x =>
           //If bracket Map exists
@@ -167,14 +167,13 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
       acc.:+(List(a(elem),b(elem)))
     }
     x.drop(1)
-    /*val x = getSeedMatches.reduceLeft{(acc, elem) =>
-      acc.:+(List(a(elem),b(elem)))
-    }
-        x*/
   }
 
   private[this] def getParticipant(id: Int) = { participants.find(x => x.id == id) }
-  private[this] def matchToJBracketFormat(m: Match): List[Option[Int]] = {
-    List(m.home.map(_.participantId),m.away.map(_.participantId))
+  private[this] def matchToJBracketFormat(m: Match): List[Option[String]] = {
+    List(seatToJBracketFormat(m.home),seatToJBracketFormat(m.away))
+  }
+  private[this] def seatToJBracketFormat(s: Option[Seat]): Option[String] = {
+    s.fold[Option[String]](None){x => x.score.fold[Option[String]](x.winner.fold[Option[String]](None)(j => Option(j.toString))){k => Option(k.toString)}}
   }
 }
