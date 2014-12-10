@@ -171,7 +171,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
 
   private[this] def getParticipant(id: Int) = { participants.find(x => x.id == id) }
   private[this] def matchToJBracketFormat(m: Match): List[Option[String]] = {
-    List(seatToJBracketFormat(m.home),seatToJBracketFormat(m.away))
+    List(seatToJBracketFormat(m.home),seatToJBracketFormat(m.away), Option(m.id.toString))
   }
   private[this] def seatToJBracketFormat(s: Option[Seat]): Option[String] = {
     s.fold[Option[String]](None){x => x.score.fold[Option[String]](x.winner.fold[Option[String]](None)(j => Option(j.toString))){k => Option(k.toString)}}
