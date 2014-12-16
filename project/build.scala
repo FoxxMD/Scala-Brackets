@@ -14,8 +14,8 @@ object ScalaBracket extends Build {
         "org.json4s" %% "json4s-ext" % "3.2.10",
         "org.json4s" %% "json4s-core" % "3.2.10",
         "org.scalatest" % "scalatest_2.11" % "2.2.0" % "test",
-        "com.github.julien-truffaut"  %%  "monocle-core"    % "0.5.1"
+        "com.github.julien-truffaut"  %%  "monocle-core"    % "0.5.1",
+        "com.novus" %% "salat" % "1.9.9"
       )
     ))
 }
-
