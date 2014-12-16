@@ -8,21 +8,21 @@ import org.json4s.JsonAST.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.{DefaultFormats, Extraction, Formats}
-
 import scala.collection.immutable.SortedSet
+import com.novus.salat.annotations._
 
 /**
  * Created by Matthew on 11/24/2014.
  */
 
-case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = Set(), seedOrder: Option[Array[Int]] = None) extends BaseTournament[ElimTour] {
+case class ElimTour(matches: List[Match], participants: Set[Participant] = Set(), seedOrder: Seq[Int] = Seq.empty, @Key("_id") id: String = "") extends BaseTournament[ElimTour] {
 
   if (matches.count(x => x.inStartingRound) * 2 < participants.size)
     throw new IllegalArgumentException("Cannot create a tournament with more participants than starting seats")
 
   implicit val formats: Formats = DefaultFormats + new NoneJNullSerializer
 
-  private[this] val _matches: SimpleLens[ElimTour, SortedSet[Match]] = SimpleLens[ElimTour](_.matches)((b, modifiedMatches) => b.copy(matches = modifiedMatches))
+  private[this] val _matches: SimpleLens[ElimTour, List[Match]] = SimpleLens[ElimTour](_.matches)((b, modifiedMatches) => b.copy(matches = modifiedMatches))
   private[this] val _homeSeat: SimpleLens[Match, Option[Seat]] = SimpleLens[Match](_.home)((m, s) => m.copy(home = s))
   private[this] val _awaySeat = SimpleLens[Match](_.home)((m, s) => m.copy(home = s))
   private[this] val _participants: SimpleLens[ElimTour, Set[Participant]] = SimpleLens[ElimTour](_.participants)((b, modifiedPars) => b.copy(participants = modifiedPars))
@@ -33,7 +33,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
       throw new IllegalArgumentException("Cannot add more participants than starting seats")
     else {
       val zmatch = matches.find(x => x.inStartingRound && x.hasAvailableSeat).get
-      this applyLens _matches modify (_.-(zmatch)) applyLens _matches modify (_.+(zmatch.addSeat(par.id))) applyLens _participants modify (_.+(par))
+      this applyLens _matches modify (_ diff List(zmatch)) applyLens _matches modify (_.:+(zmatch.addSeat(par.id))) applyLens _participants modify (_.+(par))
     }
   }
 
@@ -45,7 +45,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
 
     val zmatch = getSeedMatches.find(x => x.includes(parId)).get
 
-    this applyLens _participants modify (_.-(participant)) applyLens _matches modify (_.-(zmatch)) applyLens _matches modify (_.+(zmatch.removeSeat(parId)))
+    this applyLens _participants modify (_.-(participant)) applyLens _matches modify (_ diff List(zmatch)) applyLens _matches modify (_.:+(zmatch.removeSeat(parId)))
   }
 
   def updateParticipant(participant: Participant): ElimTour = {
@@ -53,11 +53,11 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     this applyLens _participants modify (_.-(oldParticipant)) applyLens _participants modify (_.+(participant))
   }
 
-  def seed(newParticipants: Option[Set[Participant]] = None, newSeedOrder: Option[Array[Int]] = None): ElimTour = {
+  def seed(newParticipants: Option[Set[Participant]] = None, newSeedOrder: Option[Seq[Int]] = None): ElimTour = {
 
     val usedParticipants = newParticipants.getOrElse(participants)
-    val usedSeedOrder = newSeedOrder.getOrElse(seedOrder.getOrElse{
-      usedParticipants.foldLeft(Array[Int]())((acc, elem) => acc :+ elem.id)
+    val usedSeedOrder = newSeedOrder.getOrElse(if (seedOrder.nonEmpty) seedOrder else {
+      usedParticipants.foldLeft(Seq[Int]())((acc, elem) => acc :+ elem.id)
     })
 
     if (matches.count(x => x.inStartingRound) * 2 < usedParticipants.size)
@@ -65,10 +65,10 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     if (usedSeedOrder.size > 0 && usedSeedOrder.size < newParticipants.size)
       throw new Exception("Seed order list size does not correspond to participant list size")
 
-    val (seedMatches, nonSeedMatches) = matches.partition(x => x.inStartingRound)
+    val (seedMatches, nonSeedMatches) = matches.sortBy(x => x.id).partition(x => x.inStartingRound)
     var index = 0
 
-    val newMatches = nonSeedMatches ++ seedMatches.foldLeft(SortedSet[Match]()) { (accum, element) =>
+    val newMatches = nonSeedMatches ++ seedMatches.sortBy(x => x.id).foldLeft(SortedSet[Match]()) { (accum, element) =>
       var homeOption: Option[Participant] = None
       var awayOption: Option[Participant] = None
       if(usedSeedOrder.lift(index).isDefined)
@@ -96,7 +96,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
   def setScore(matchId: Int, homeScore: Option[Int] = None, awayScore: Option[Int] = None) = {
     val zmatch = matches.find(x => x.id == matchId).getOrElse(throw new Exception("Cannot find match with Id " + matchId))
     val newMatch = zmatch.copy(home = zmatch.home map (_.setScore(homeScore)))
-    this applyLens _matches set matches.filterNot(x => x.id == zmatch.id).+(newMatch)
+    this applyLens _matches set matches.filterNot(x => x.id == zmatch.id).:+(newMatch)
   }
 
   def advanceMatch(matchId: Int, winnerId: Int): ElimTour = {
@@ -104,7 +104,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     val tourWithUpdatedWinner = if (wonMatch.winnerTo.isDefined) {
       val advancingMatch = matches.find(_.id == wonMatch.winnerTo.get).get
       val first = updateMatches(matches, wonMatch, wonMatch.winner(winnerId))
-      this.copy(matches = updateMatches(first, advancingMatch, advancingMatch.addSeat(wonMatch.winner.get.participantId)))
+      this.copy(matches = updateMatches(first, advancingMatch, advancingMatch.addSeat(winnerId)))
     }
     else
       this.copy(matches = updateMatches(matches, wonMatch, wonMatch.winner(winnerId)))
@@ -118,27 +118,27 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     tourwithUpdatedLoser
   }
 
-  def getWinner: Option[Participant] = matches.last.winner.fold[Option[Participant]](None)(p => participants.find(x => x.id == p.participantId))
+  def getWinner: Option[Participant] = matches.sortBy(x => x.id).last.winner.fold[Option[Participant]](None)(p => participants.find(x => x.id == p.participantId))
 
-  def getMatchesByRound(round: Int) = matches.filter(x => x.round == round)
+  def getMatchesByRound(round: Int) = matches.filter(x => x.round == round).sortBy(x => x.id)
 
   def getMatch(matchId: Int) = matches.find(x => x.id == matchId).get
 
-  private[this] def getNonSeedMatches: SortedSet[Match] = {
-    matches.filter(x => !x.inStartingRound)
+  private[this] def getNonSeedMatches: List[Match] = {
+    matches.filter(x => !x.inStartingRound).sortBy(x => x.id)
   }
 
-  private[this] def getSeedMatches: SortedSet[Match] = {
-    matches.filter(x => x.inStartingRound)
+  private[this] def getSeedMatches: List[Match] = {
+    matches.filter(x => x.inStartingRound).sortBy(x => x.id)
   }
 
-  private[this] def updateMatches(zmatches: SortedSet[Match], oldMatch: Match, newMatch: Match): SortedSet[Match] = {
-    matches.filterNot(_ == oldMatch) + newMatch
+  private[this] def updateMatches(zmatches: List[Match], oldMatch: Match, newMatch: Match): List[Match] = {
+    matches.filterNot(_ == oldMatch) :+ newMatch sortBy(x => x.id)
   }
 
   override def outputResultsJBracket: JValue = {
 
-    val a = matches.foldLeft(Map[String, Map[String, List[List[Option[String]]]]]()) { (acc, elem) =>
+    val a = matches.sortBy(x => x.id).foldLeft(Map[String, Map[String, List[List[Option[String]]]]]()) { (acc, elem) =>
       //update bracket Map based on match bracket #
       acc updated(elem.bracket.toString, acc.get(elem.bracket.toString).fold {
         //if no bracket Map
@@ -170,7 +170,7 @@ case class ElimTour(matches: SortedSet[Match], participants: Set[Participant] = 
     def a(elem: Match): Option[JValue] = elem.home.map(x => getParticipant(x.participantId).map(y => render(("id" -> y.id) ~ y.payload.get)))
     def b(elem: Match): Option[JValue] = elem.away.map(x => getParticipant(x.participantId).map(y => render(("id" -> y.id) ~ y.payload.get)))
 
-    val x = getSeedMatches.foldLeft(List(List[Option[JValue]]())){(acc, elem) =>
+    val x = getSeedMatches.sortBy(x => x.id).foldLeft(List(List[Option[JValue]]())){(acc, elem) =>
       acc.:+(List(a(elem),b(elem)))
     }
     x.drop(1)

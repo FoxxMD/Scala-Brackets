@@ -2,8 +2,6 @@ package ScalaBrackets
 
 import ScalaBrackets.Bracket.ElimTour
 
-import scala.collection.immutable.SortedSet
-
 /**
  * Created by Matthew on 12/9/2014.
  */
@@ -11,14 +9,14 @@ import scala.collection.immutable.SortedSet
 object SingleElimination {
 
   def generate2: ElimTour = {
-    val matches = SortedSet(
+    val matches = List(
       Match(id = 1, winnerTo = None, round = 1)
     )
     ElimTour(matches)
   }
 
   def generate4: ElimTour = {
-    val matches = SortedSet(
+    val matches = List(
       Match(id = 1, winnerTo = Option(3), round = 1),
       Match(id = 2, winnerTo = Option(3), round = 1),
       Match(id = 3, winnerTo = None, round = 2)
@@ -27,7 +25,7 @@ object SingleElimination {
   }
 
   def generate8 : ElimTour = {
-    val matches = SortedSet(
+    val matches = List(
       Match(id = 1, winnerTo = Option(5), round = 1),
       Match(id = 2, winnerTo = Option(5), round = 1),
       Match(id = 3, winnerTo = Option(6), round = 1),
@@ -39,7 +37,7 @@ object SingleElimination {
     ElimTour(matches)
   }
   def generate16: ElimTour = {
-    val matches = SortedSet(
+    val matches = List(
       Match(id = 1, winnerTo = Option(9), round = 1),
       Match(id = 2, winnerTo = Option(9), round = 1),
       Match(id = 3, winnerTo = Option(10), round = 1),
@@ -63,7 +61,7 @@ object SingleElimination {
 object DoubleElimination {
 
   def generate4: ElimTour = {
-    val matches = SortedSet(
+    val matches = List(
       Match(id = 1, winnerTo = Option(3), loserTo = Option(4), round = 1),
       Match(id = 2, winnerTo = Option(3), loserTo = Option(4), round = 1),
       Match(id = 3, winnerTo = Option(5), round = 2),
@@ -77,7 +75,7 @@ object DoubleElimination {
   }
 
   def generate8 : ElimTour = {
-    val matches = SortedSet(
+    val matches = List(
       Match(id = 1, winnerTo = Option(5), loserTo = Option(8), round = 1),
       Match(id = 2, winnerTo = Option(5), loserTo = Option(8), round = 1),
       Match(id = 3, winnerTo = Option(6), loserTo = Option(9), round = 1),

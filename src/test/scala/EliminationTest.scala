@@ -4,7 +4,6 @@ import org.json4s.JsonAST.{JObject, JString}
 import org.json4s.jackson.JsonMethods._
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
-import scala.collection.immutable.SortedSet
 import scala.util.Random
 
 /**
@@ -78,7 +77,7 @@ class EliminationTest extends FlatSpec with Matchers with GivenWhenThen {
     assert(advancedTour.getMatch(5).home.get.participantId == tour.getMatch(1).away.get.participantId)
   }
 
-  val sampleSingleElimMatches = SortedSet(
+  val sampleSingleElimMatches = List(
     Match(id = 1, winnerTo = Option(5), round = 1),
     Match(id = 2, winnerTo = Option(5), round = 1),
     Match(id = 3, winnerTo = Option(6), round = 1),

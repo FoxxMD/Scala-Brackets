@@ -3,18 +3,17 @@ package ScalaBrackets.Bracket
 import ScalaBrackets._
 import org.json4s.JsonAST.JValue
 
-import scala.collection.immutable.SortedSet
-
 /**
  * Created by Matthew on 12/3/2014.
  */
 trait BaseTournament[T] {
 
-  def matches: SortedSet[Match]
+  def matches: List[Match]
   def participants: Set[Participant]
-  def seedOrder: Option[Array[Int]]
+  def seedOrder: Seq[Int]
+  def id: String
 
-  def seed(newParticipants: Option[Set[Participant]], newSeedOrder: Option[Array[Int]]): BaseTournament[T]
+  def seed(newParticipants: Option[Set[Participant]], newSeedOrder: Option[Seq[Int]]): BaseTournament[T]
   def addParticipant(par: Participant): BaseTournament[T]
   def removeParticipant(parId: Int): BaseTournament[T]
   def updateParticipant(participant: Participant): BaseTournament[T]
@@ -22,7 +21,7 @@ trait BaseTournament[T] {
   def advanceMatch(matchId: Int, winnerId: Int): BaseTournament[T]
 
   def getWinner: Option[Participant]
-  def getMatchesByRound(round: Int): SortedSet[Match]
+  def getMatchesByRound(round: Int): List[Match]
   def getMatch(matchId: Int): Match
 
   def outputResultsJBracket: JValue
