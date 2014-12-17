@@ -35,6 +35,40 @@ case class Match(id: Int, home: Option[Seat] = None, away: Option[Seat] = None, 
       throw new Exception("Neither match seat contains the participantId " + participantId)
   }
 
+  def updateSeat(oldParId: Int, newParId: Int): Match = {
+    if(home.isDefined && home.get.participantId == oldParId)
+      this.copy(home = Option(home.get.copy(participantId = newParId)))
+    else if(away.isDefined && away.get.participantId == oldParId)
+      this.copy(away = Option(away.get.copy(participantId = newParId)))
+    else
+      throw new Exception("Neither match seat contains the participantId " + oldParId)
+  }
+
+  def updateScore(participantId: Int, score: Int): Match = {
+    if(home.isDefined && home.get.participantId == participantId) {
+      this.copy(home = home map (_.setScore(Option(score))))
+    } else if(away.isDefined && away.get.participantId == participantId){
+      this.copy(away = away map (_.setScore(Option(score))))
+    } else
+      throw new Exception("Participant Id " + participantId + " not found in match " + id + " seats")
+  }
+
+  def hasScores: Boolean = {
+    if(!hasParticipants)
+      false
+    else
+      home.get.score.isDefined && away.get.score.isDefined
+  }
+
+  def getHighScorer: Int = {
+    if(!hasScores)
+      throw new Exception("Can't find the high scorer if both seats don't have scores!")
+    if(home.get.score.get > away.get.score.get)
+      home.get.participantId
+    else
+      away.get.participantId
+  }
+
   def winner: Option[Seat] = {
     if(home.isEmpty && away.isEmpty)
       None

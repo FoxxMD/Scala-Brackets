@@ -44,7 +44,7 @@ class EliminationTest extends FlatSpec with Matchers with GivenWhenThen {
 
     val updatedParticipant = Participant(1, payload = Option(randomPersonGen))
 
-    assert(tourWithP.updateParticipant(updatedParticipant).participants.head.equals(updatedParticipant))
+    assert(tourWithP.updateParticipant(1, updatedParticipant).participants.head.equals(updatedParticipant))
   }
   it should "seed starting matches" in {
     val players = for (x: Int <- 1 to 8) yield {Participant(id = x, payload = Option(randomPersonGen))}

@@ -41,16 +41,22 @@ case class ElimTour(matches: List[Match], participants: Set[Participant] = Set()
     val participant = participants.find(x => x.id == parId).getOrElse(throw new Exception("No participant with the Id " + parId + " exists in this bracket."))
 
     if (getNonSeedMatches.flatMap(x => List(x.home, x.away)).flatten.exists(x => x.participantId == parId))
-      throw new Exception("Cannot remove participant who has already progressed in bracket. Perhaps you want to change the participant payload?")
+      throw new BracketException("Cannot remove participant who has already progressed in bracket. Perhaps you want to change the participant payload?")
 
     val zmatch = getSeedMatches.find(x => x.includes(parId)).get
 
     this applyLens _participants modify (_.-(participant)) applyLens _matches modify (_ diff List(zmatch)) applyLens _matches modify (_.:+(zmatch.removeSeat(parId)))
   }
 
-  def updateParticipant(participant: Participant): ElimTour = {
-    val oldParticipant = participants.find(x => x.id == participant.id).getOrElse(throw new Exception("No participant with the Id " + participant.id + "found."))
-    this applyLens _participants modify (_.-(oldParticipant)) applyLens _participants modify (_.+(participant))
+  def updateParticipant(parId: Int, participant: Participant): ElimTour = {
+    val oldParticipant = participants.find(x => x.id == parId).getOrElse(throw new Exception("No participant with the Id " + parId + "found."))
+    val updatedMatches = matches.map{x =>
+      if(x.includes(parId))
+        x.updateSeat(parId, participant.id)
+      else
+        x
+    }
+    this applyLens _participants modify (_.-(oldParticipant)) applyLens _participants modify (_.+(participant)) copy (matches = updatedMatches)
   }
 
   def seed(newParticipants: Option[Set[Participant]] = None, newSeedOrder: Option[Seq[Int]] = None): ElimTour = {
@@ -95,7 +101,17 @@ case class ElimTour(matches: List[Match], participants: Set[Participant] = Set()
 
   def setScore(matchId: Int, homeScore: Option[Int] = None, awayScore: Option[Int] = None) = {
     val zmatch = matches.find(x => x.id == matchId).getOrElse(throw new Exception("Cannot find match with Id " + matchId))
-    val newMatch = zmatch.copy(home = zmatch.home map (_.setScore(homeScore)))
+    val newMatch = zmatch.copy(home = zmatch.home map (_.setScore(homeScore)), away = zmatch.away map (_.setScore(awayScore)))
+    this applyLens _matches set matches.filterNot(x => x.id == zmatch.id).:+(newMatch)
+  }
+
+  def setScore(matchId: Int, participantId: Int, score: Int) = {
+    val zmatch = matches.find(x => x.id == matchId).getOrElse[Match](throw new Exception("Cannot find match with Id " + matchId)).updateScore(participantId, score)
+    val newMatch = if(zmatch.hasScores) {
+      zmatch.winner(zmatch.getHighScorer)
+    }else{
+      zmatch
+    }
     this applyLens _matches set matches.filterNot(x => x.id == zmatch.id).:+(newMatch)
   }
 

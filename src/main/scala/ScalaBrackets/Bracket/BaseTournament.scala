@@ -16,7 +16,7 @@ trait BaseTournament[T] {
   def seed(newParticipants: Option[Set[Participant]], newSeedOrder: Option[Seq[Int]]): BaseTournament[T]
   def addParticipant(par: Participant): BaseTournament[T]
   def removeParticipant(parId: Int): BaseTournament[T]
-  def updateParticipant(participant: Participant): BaseTournament[T]
+  def updateParticipant(parId: Int, participant: Participant): BaseTournament[T]
   def setScore(matchId: Int, homeScore: Option[Int], awayScore: Option[Int]): BaseTournament[T]
   def advanceMatch(matchId: Int, winnerId: Int): BaseTournament[T]
 
